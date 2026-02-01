@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Controle Mensal de Ensaios</title>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f1f1f1;
+  padding:20px;
+}
+
+h2{text-align:center;}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+}
+
+th,td{
+  border:1px solid #ccc;
+  padding:6px;
+  text-align:center;
+}
+
+th{
+  background:#222;
+  color:white;
+}
+
+.quarta{ background:#fff3c4; }
+.quinta{ background:#e4d9ff; }
+.sabado{ background:#d0e7ff; }
+.domingo{ background:#ffd6d6; }
+
+.trabalho{ font-weight:bold; }
+.folga{ color:#777; }
+
+.hoje{
+  outline:3px solid #000;
+}
+
+#relatorio{
+  margin-top:15px;
+  padding:10px;
+  background:#fff;
+  border:2px solid #333;
+}
+</style>
+</head>
+
+<body>
+
+<h2 id="titulo"></h2>
+
+<table>
+<thead>
+<tr>
+  <th>Dia</th>
+  <th>Data</th>
+  <th>Status</th>
+  <th>Abizael</th>
+  <th>Renan</th>
+</tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
+
+<div id="relatorio"></div>
+
+<script>
+const dias = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+const hoje = new Date();
+const mes = hoje.getMonth();
+const ano = hoje.getFullYear();
+const storageKey = `controle_${ano}_${mes}`;
+
+document.getElementById("titulo").innerText =
+  `Controle Mensal – ${hoje.toLocaleString("pt-BR",{month:"long"}).toUpperCase()} ${ano}`;
+
+const dados = JSON.parse(localStorage.getItem(storageKey)) || {};
+const tbody = document.getElementById("tabela");
+const relatorio = document.getElementById("relatorio");
+
+function salvar(){
+  localStorage.setItem(storageKey, JSON.stringify(dados));
+  atualizarRelatorio();
+}
+
+function atualizarRelatorio(){
+  let trabalho = 0;
+  let folga = 0;
+
+  Object.values(dados).forEach(d=>{
+    if(d.status === "Trabalho") trabalho++;
+    if(d.status === "Folga") folga++;
+  });
+
+  relatorio.innerHTML = `
+    <strong>📊 RELATÓRIO DO MÊS</strong><br>
+    ✅ Dias de Trabalho: <b>${trabalho}</b><br>
+    💤 Dias de Folga: <b>${folga}</b>
+  `;
+}
+
+const ultimoDia = new Date(ano, mes+1, 0).getDate();
+
+for(let d=1; d<=ultimoDia; d++){
+  const data = new Date(ano, mes, d);
+  const nomeDia = dias[data.getDay()];
+
+  if(!dados[d]) dados[d] = {};
+
+  let statusPadrao =
+    ["Quarta","Quinta","Sábado","Domingo"].includes(nomeDia)
+    ? "Folga"
+    : "Trabalho";
+
+  dados[d].status ??= statusPadrao;
+  dados[d].abizael ??= false;
+  dados[d].renan ??= false;
+
+  const tr = document.createElement("tr");
+
+  if(nomeDia === "Quarta") tr.classList.add("quarta");
+  if(nomeDia === "Quinta") tr.classList.add("quinta");
+  if(nomeDia === "Sábado") tr.classList.add("sabado");
+  if(nomeDia === "Domingo") tr.classList.add("domingo");
+  if(d === hoje.getDate()) tr.classList.add("hoje");
+
+  tr.innerHTML = `
+    <td>${nomeDia}</td>
+    <td>${String(d).padStart(2,"0")}/${String(mes+1).padStart(2,"0")}/${ano}</td>
+    <td>
+      ${
+        ["Quarta","Quinta","Sábado","Domingo"].includes(nomeDia)
+        ? `<select onchange="dados[${d}].status=this.value; salvar()">
+            <option ${dados[d].status=="Folga"?"selected":""}>Folga</option>
+            <option ${dados[d].status=="Trabalho"?"selected":""}>Trabalho</option>
+          </select>`
+        : `<span class="trabalho">Trabalho</span>`
+      }
+    </td>
+    <td>
+      <input type="checkbox"
+        ${dados[d].abizael?"checked":""}
+        onchange="dados[${d}].abizael=this.checked; salvar()">
+    </td>
+    <td>
+      <input type="checkbox"
+        ${dados[d].renan?"checked":""}
+        onchange="dados[${d}].renan=this.checked; salvar()">
+    </td>
+  `;
+
+  tbody.appendChild(tr);
+}
+
+salvar();
+</script>
+
+</body>
+</html>
