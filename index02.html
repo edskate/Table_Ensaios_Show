@@ -1,0 +1,1091 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Controle Mensal de Ensaios</title>
+  <style>
+    :root{
+      --bg:#f1f1f1;
+      --card:#ffffff;
+      --line:#d9d9d9;
+      --text:#111;
+      --muted:#666;
+      --head:#222;
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+      --r:14px;
+
+      --quarta:#fff3c4;
+      --quinta:#e4d9ff;
+      --sabado:#d0e7ff;
+      --domingo:#ffd6d6;
+
+      --ok:#1f7a3a;
+      --warn:#b36b00;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      padding: 16px;
+    }
+
+    .wrap{ max-width: 1100px; margin: 0 auto; }
+
+    .topbar{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      background:var(--card);
+      padding: 12px 14px;
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+    }
+
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width: 230px;
+    }
+    .brand .title{
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .brand .sub{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    button, select, input{
+      font: inherit;
+    }
+
+    .btn{
+      border:1px solid var(--line);
+      background:#fff;
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      box-shadow: 0 6px 12px rgba(0,0,0,.05);
+    }
+    .btn:hover{ filter: brightness(.98); }
+    .btn.primary{
+      background:#111;
+      color:#fff;
+      border-color:#111;
+    }
+
+    .pill{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--line);
+      padding: 8px 10px;
+      border-radius: 999px;
+      background:#fff;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.4fr .6fr;
+      gap:12px;
+      margin-top: 12px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .cardHead{
+      padding: 12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap: wrap;
+      background:#fff;
+    }
+
+    .cardHead .h{
+      font-weight: 800;
+    }
+    .cardHead .m{
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .cardBody{ padding: 12px 14px; }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      background:#fff;
+    }
+    th, td{
+      border:1px solid var(--line);
+      padding: 8px 6px;
+      text-align:center;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    th{
+      background: var(--head);
+      color:#fff;
+      font-weight: 700;
+    }
+
+    td.daycol{
+      font-weight: 700;
+      text-align:left;
+      padding-left:10px;
+      background:#fafafa;
+      min-width: 110px;
+    }
+
+    tr.quarta  td{ background: var(--quarta); }
+    tr.quinta  td{ background: var(--quinta); }
+    tr.sabado  td{ background: var(--sabado); }
+    tr.domingo td{ background: var(--domingo); }
+    tr.quarta td.daycol, tr.quinta td.daycol, tr.sabado td.daycol, tr.domingo td.daycol{ background: inherit; }
+
+    tr.today{
+      outline: 3px solid #000;
+      outline-offset: -3px;
+    }
+
+    .statusSpan{
+      font-weight: 800;
+    }
+    .statusSpan.work{ color: var(--ok); }
+    .statusSpan.off{ color: #777; }
+
+    .mini{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 10px;
+    }
+    .kpi .box{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+    .kpi .box .n{
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+    .kpi .box .l{
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    canvas{
+      width:100%;
+      height: 220px;
+      display:block;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    /* LOGIN */
+    .loginWrap{
+      min-height: calc(100vh - 32px);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .loginCard{
+      width: min(520px, 100%);
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .loginCard h1{
+      margin: 0 0 6px 0;
+      font-size: 18px;
+    }
+    .loginCard p{
+      margin: 0 0 14px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom: 10px;
+    }
+    .field label{ font-size: 12px; color: var(--muted); }
+    .field input, .field select{
+      border:1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background:#fff;
+    }
+    .loginActions{
+      display:flex;
+      gap:10px;
+      flex-wrap: wrap;
+    }
+    .note{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* MOBILE */
+    @media (max-width: 920px){
+      .grid{ grid-template-columns: 1fr; }
+      td.daycol{ min-width: 92px; }
+      th, td{ font-size: 12px; padding: 7px 6px; }
+      .brand{ min-width: unset; }
+    }
+
+    /* PRINT / PDF */
+    @page { size: A4; margin: 12mm; }
+    @media print{
+      body{ background:#fff; padding:0; }
+      .topbar, .controls, .btn, .pill, #btnLogout, #btnPrev, #btnNext, #btnToday, #btnAnnual, #btnClearMonth{
+        display:none !important;
+      }
+      .wrap{ max-width: none; margin:0; }
+      .grid{ grid-template-columns: 1fr; gap:10px; }
+      .card{ box-shadow:none; }
+      canvas{ height: 160px; }
+      tr.today{ outline: none; }
+      th{ background:#111 !important; color:#fff !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loginView" class="loginWrap" hidden>
+    <div class="loginCard">
+      <h1>Login do Controle Mensal</h1>
+      <p>Seus dados ficam salvos <b>no seu computador</b> e separados por usuário.</p>
+
+      <div class="field">
+        <label>Usuário</label>
+        <select id="loginUser"></select>
+      </div>
+
+      <div class="field">
+        <label>PIN (4 a 8 dígitos)</label>
+        <input id="loginPin" inputmode="numeric" placeholder="Ex: 1234" />
+      </div>
+
+      <div class="loginActions">
+        <button class="btn primary" id="btnEnter">Entrar</button>
+        <button class="btn" id="btnNewUser">Criar usuário</button>
+        <button class="btn" id="btnDeleteUser">Excluir usuário</button>
+      </div>
+
+      <div class="note">
+        Dica: “Criar usuário” serve para você ter contas separadas (ex.: Edy / Produção / Técnico).
+      </div>
+    </div>
+  </div>
+
+  <div id="appView" class="wrap" hidden>
+    <div class="topbar">
+      <div class="brand">
+        <div class="title" id="appTitle">Controle Mensal</div>
+        <div class="sub">
+          Usuário: <b id="who"></b> • <span id="clock"></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="pill">
+          <span>📅</span>
+          <span id="monthLabel"></span>
+        </div>
+
+        <button class="btn" id="btnPrev">◀ Mês</button>
+        <button class="btn" id="btnToday">Hoje</button>
+        <button class="btn" id="btnNext">Mês ▶</button>
+
+        <button class="btn" id="btnAnnual">Relatório anual</button>
+        <button class="btn" id="btnPDF">Exportar PDF</button>
+        <button class="btn" id="btnClearMonth">Limpar mês</button>
+        <button class="btn" id="btnLogout">Sair</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- TABELA -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <div class="h">Tabela do mês</div>
+            <div class="m">Seg/ Ter/ Sex = <b>Trabalho fixo</b>. Qua/ Qui/ Sáb/ Dom = você escolhe.</div>
+          </div>
+          <div class="mini" id="saveHint">Salva automaticamente ✅</div>
+        </div>
+
+        <div class="cardBody" style="padding:0;">
+          <div style="overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dia</th>
+                  <th>Data</th>
+                  <th>Status</th>
+                  <th>Abizael</th>
+                  <th>Renan</th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- RELATÓRIO + GRÁFICO -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <div class="h">Relatório mensal</div>
+            <div class="m">Resumo + gráfico automático</div>
+          </div>
+        </div>
+
+        <div class="cardBody">
+          <div class="row">
+            <div class="mini">Trabalho/Folga e presenças do mês</div>
+          </div>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="n" id="kpiWork">0</div>
+              <div class="l">Dias de trabalho</div>
+            </div>
+            <div class="box">
+              <div class="n" id="kpiOff">0</div>
+              <div class="l">Dias de folga</div>
+            </div>
+            <div class="box">
+              <div class="n" id="kpiAb">0</div>
+              <div class="l">Presenças Abizael</div>
+            </div>
+            <div class="box">
+              <div class="n" id="kpiRe">0</div>
+              <div class="l">Presenças Renan</div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <canvas id="chart" width="900" height="300"></canvas>
+            <div class="mini" style="margin-top:8px;">
+              Gráfico: dias de trabalho por semana (automático).
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL RELATÓRIO ANUAL -->
+    <div id="annualModal" hidden style="position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:14px;">
+      <div style="width:min(980px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;">
+        <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:900;">📅 Relatório anual</div>
+            <div class="mini">Soma mês a mês para o usuário logado</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span class="mini">Ano:</span>
+            <select id="annualYear" class="btn" style="padding:8px 10px;"></select>
+            <button class="btn" id="btnCloseAnnual">Fechar</button>
+            <button class="btn primary" id="btnPrintAnnual">Imprimir/PDF</button>
+          </div>
+        </div>
+
+        <div style="padding:12px 14px;">
+          <div style="overflow:auto;">
+            <table id="annualTable">
+              <thead>
+                <tr>
+                  <th>Mês</th>
+                  <th>Trabalho</th>
+                  <th>Folga</th>
+                  <th>Presenças Abizael</th>
+                  <th>Presenças Renan</th>
+                </tr>
+              </thead>
+              <tbody id="annualBody"></tbody>
+              <tfoot>
+                <tr>
+                  <th>Total</th>
+                  <th id="annualTW">0</th>
+                  <th id="annualTF">0</th>
+                  <th id="annualTA">0</th>
+                  <th id="annualTR">0</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div style="margin-top:10px;">
+            <canvas id="annualChart" width="900" height="260"></canvas>
+            <div class="mini" style="margin-top:6px;">Gráfico anual: trabalho por mês.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+/* =========================
+   STORAGE (1 arquivo offline)
+========================= */
+const STORE_KEY = "EMC_CONTROLE_V1";
+
+function loadStore(){
+  try{
+    return JSON.parse(localStorage.getItem(STORE_KEY)) || { users:{}, data:{} };
+  }catch{
+    return { users:{}, data:{} };
+  }
+}
+function saveStore(store){
+  localStorage.setItem(STORE_KEY, JSON.stringify(store));
+}
+
+function ymKey(y,m){ // m: 0-11
+  return `${y}-${String(m+1).padStart(2,"0")}`;
+}
+
+function monthName(y,m){
+  const d = new Date(y,m,1);
+  return d.toLocaleString("pt-BR",{month:"long"}).toUpperCase() + " " + y;
+}
+
+function daysInMonth(y,m){
+  return new Date(y, m+1, 0).getDate();
+}
+
+const diasSemana = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+function dowName(y,m,day){
+  return diasSemana[new Date(y,m,day).getDay()];
+}
+
+/* =========================
+   AUTH (login simples local)
+========================= */
+const loginView = document.getElementById("loginView");
+const appView = document.getElementById("appView");
+const loginUser = document.getElementById("loginUser");
+const loginPin = document.getElementById("loginPin");
+const btnEnter = document.getElementById("btnEnter");
+const btnNewUser = document.getElementById("btnNewUser");
+const btnDeleteUser = document.getElementById("btnDeleteUser");
+
+let store = loadStore();
+let currentUser = null;
+
+function refreshUserList(){
+  const names = Object.keys(store.users);
+  loginUser.innerHTML = "";
+  if(names.length === 0){
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "— nenhum usuário —";
+    loginUser.appendChild(opt);
+    return;
+  }
+  names.sort((a,b)=>a.localeCompare(b));
+  for(const n of names){
+    const opt = document.createElement("option");
+    opt.value = n;
+    opt.textContent = n;
+    loginUser.appendChild(opt);
+  }
+}
+
+function showLogin(){
+  refreshUserList();
+  loginPin.value = "";
+  loginView.hidden = false;
+  appView.hidden = true;
+}
+function showApp(){
+  loginView.hidden = true;
+  appView.hidden = false;
+}
+
+function hashPin(pin){
+  // simples (não é segurança real), só separação de usuários
+  let h = 0;
+  for(let i=0;i<pin.length;i++){
+    h = (h*31 + pin.charCodeAt(i)) >>> 0;
+  }
+  return String(h);
+}
+
+function ensureUserData(user){
+  if(!store.data[user]) store.data[user] = {};
+}
+
+btnNewUser.addEventListener("click", ()=>{
+  const name = prompt("Nome do usuário (ex: Edy):")?.trim();
+  if(!name) return;
+  if(store.users[name]){
+    alert("Esse usuário já existe.");
+    return;
+  }
+  const pin = prompt("Defina um PIN (4 a 8 dígitos):")?.trim();
+  if(!pin || pin.length < 4 || pin.length > 8 || !/^\d+$/.test(pin)){
+    alert("PIN inválido. Use 4 a 8 dígitos.");
+    return;
+  }
+  store.users[name] = { pin: hashPin(pin) };
+  ensureUserData(name);
+  saveStore(store);
+  refreshUserList();
+  loginUser.value = name;
+  alert("Usuário criado ✅");
+});
+
+btnDeleteUser.addEventListener("click", ()=>{
+  const name = loginUser.value;
+  if(!name || !store.users[name]) return;
+  const ok = confirm(`Excluir o usuário "${name}"? (perde todos os dados dele)`);
+  if(!ok) return;
+  delete store.users[name];
+  delete store.data[name];
+  saveStore(store);
+  refreshUserList();
+});
+
+btnEnter.addEventListener("click", ()=>{
+  const name = loginUser.value;
+  const pin = loginPin.value.trim();
+  if(!name || !store.users[name]){
+    alert("Crie um usuário primeiro.");
+    return;
+  }
+  if(hashPin(pin) !== store.users[name].pin){
+    alert("PIN incorreto.");
+    return;
+  }
+  currentUser = name;
+  ensureUserData(currentUser);
+  saveStore(store);
+  initApp();
+});
+
+document.getElementById("btnLogout").addEventListener("click", ()=>{
+  currentUser = null;
+  showLogin();
+});
+
+/* =========================
+   APP STATE
+========================= */
+const who = document.getElementById("who");
+const clock = document.getElementById("clock");
+const monthLabel = document.getElementById("monthLabel");
+const tbody = document.getElementById("tbody");
+const appTitle = document.getElementById("appTitle");
+
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const btnToday = document.getElementById("btnToday");
+const btnPDF = document.getElementById("btnPDF");
+const btnClearMonth = document.getElementById("btnClearMonth");
+const btnAnnual = document.getElementById("btnAnnual");
+
+const kpiWork = document.getElementById("kpiWork");
+const kpiOff  = document.getElementById("kpiOff");
+const kpiAb   = document.getElementById("kpiAb");
+const kpiRe   = document.getElementById("kpiRe");
+
+const chart = document.getElementById("chart");
+const ctx = chart.getContext("2d");
+
+const annualModal = document.getElementById("annualModal");
+const annualYear = document.getElementById("annualYear");
+const annualBody = document.getElementById("annualBody");
+const annualTW = document.getElementById("annualTW");
+const annualTF = document.getElementById("annualTF");
+const annualTA = document.getElementById("annualTA");
+const annualTR = document.getElementById("annualTR");
+const annualChart = document.getElementById("annualChart");
+const actx = annualChart.getContext("2d");
+
+document.getElementById("btnCloseAnnual").addEventListener("click", ()=> annualModal.hidden = true);
+document.getElementById("btnPrintAnnual").addEventListener("click", ()=> window.print());
+
+let viewY, viewM; // month being viewed (0-11)
+
+function tickClock(){
+  const now = new Date();
+  clock.textContent = now.toLocaleTimeString("pt-BR");
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+function getMonthData(y,m){
+  const key = ymKey(y,m);
+  const u = store.data[currentUser];
+  if(!u[key]) u[key] = {};
+  return u[key];
+}
+
+function setDayData(y,m,day,patch){
+  const md = getMonthData(y,m);
+  if(!md[day]) md[day] = {};
+  md[day] = { ...md[day], ...patch };
+  saveStore(store);
+}
+
+function defaultStatusForDow(dow){
+  // Seg(1), Ter(2), Sex(5) = Trabalho fixo
+  // Qua(3), Qui(4), Sáb(6), Dom(0) = editável (default Folga)
+  if(dow === 1 || dow === 2 || dow === 5) return "Trabalho";
+  return "Folga";
+}
+
+function isEditableDow(dow){
+  return (dow === 3 || dow === 4 || dow === 6 || dow === 0); // Qua, Qui, Sáb, Dom
+}
+
+function dayClassByDow(dow){
+  if(dow === 3) return "quarta";
+  if(dow === 4) return "quinta";
+  if(dow === 6) return "sabado";
+  if(dow === 0) return "domingo";
+  return "";
+}
+
+function initApp(){
+  showApp();
+  who.textContent = currentUser;
+
+  const now = new Date();
+  viewY = now.getFullYear();
+  viewM = now.getMonth();
+
+  renderMonth();
+}
+
+btnPrev.addEventListener("click", ()=>{
+  viewM--;
+  if(viewM < 0){ viewM = 11; viewY--; }
+  renderMonth();
+});
+btnNext.addEventListener("click", ()=>{
+  viewM++;
+  if(viewM > 11){ viewM = 0; viewY++; }
+  renderMonth();
+});
+btnToday.addEventListener("click", ()=>{
+  const now = new Date();
+  viewY = now.getFullYear();
+  viewM = now.getMonth();
+  renderMonth();
+});
+
+btnPDF.addEventListener("click", ()=>{
+  // Exportar PDF = imprimir formatado e salvar como PDF
+  // (Chrome: Destino -> Salvar como PDF)
+  window.print();
+});
+
+btnClearMonth.addEventListener("click", ()=>{
+  const ok = confirm("Limpar TODOS os dados deste mês (status + presenças)?");
+  if(!ok) return;
+  const key = ymKey(viewY, viewM);
+  store.data[currentUser][key] = {};
+  saveStore(store);
+  renderMonth();
+});
+
+btnAnnual.addEventListener("click", ()=>{
+  openAnnual();
+});
+
+/* =========================
+   RENDER MONTH
+========================= */
+function renderMonth(){
+  const now = new Date();
+  const isCurrentMonth = (now.getFullYear() === viewY && now.getMonth() === viewM);
+
+  const mLabel = monthName(viewY, viewM);
+  monthLabel.textContent = mLabel;
+  appTitle.textContent = "Controle Mensal • " + mLabel;
+
+  const md = getMonthData(viewY, viewM);
+  const totalDays = daysInMonth(viewY, viewM);
+
+  tbody.innerHTML = "";
+
+  for(let day=1; day<=totalDays; day++){
+    const date = new Date(viewY, viewM, day);
+    const dow = date.getDay();
+    const dowText = diasSemana[dow];
+
+    if(!md[day]) md[day] = {};
+    if(md[day].status == null) md[day].status = defaultStatusForDow(dow);
+    if(md[day].abizael == null) md[day].abizael = false;
+    if(md[day].renan == null) md[day].renan = false;
+
+    const tr = document.createElement("tr");
+    const cls = dayClassByDow(dow);
+    if(cls) tr.classList.add(cls);
+
+    if(isCurrentMonth && day === now.getDate()){
+      tr.classList.add("today");
+    }
+
+    const dd = String(day).padStart(2,"0");
+    const mm = String(viewM+1).padStart(2,"0");
+    const yyyy = String(viewY);
+    const dateText = `${dd}/${mm}/${yyyy}`;
+
+    // Status cell
+    let statusCell = "";
+    if(isEditableDow(dow)){
+      const selected = md[day].status;
+      statusCell = `
+        <select data-day="${day}" class="statusSel">
+          <option value="Folga" ${selected==="Folga"?"selected":""}>Folga</option>
+          <option value="Trabalho" ${selected==="Trabalho"?"selected":""}>Trabalho</option>
+        </select>
+      `;
+    }else{
+      statusCell = `<span class="statusSpan work">Trabalho</span>`;
+      md[day].status = "Trabalho";
+    }
+
+    tr.innerHTML = `
+      <td class="daycol">${dowText}</td>
+      <td>${dateText}</td>
+      <td>${statusCell}</td>
+      <td><input type="checkbox" class="chkAb" data-day="${day}" ${md[day].abizael ? "checked":""}></td>
+      <td><input type="checkbox" class="chkRe" data-day="${day}" ${md[day].renan ? "checked":""}></td>
+    `;
+
+    tbody.appendChild(tr);
+  }
+
+  // attach listeners
+  tbody.querySelectorAll(".statusSel").forEach(sel=>{
+    sel.addEventListener("change", (e)=>{
+      const day = Number(e.target.dataset.day);
+      setDayData(viewY, viewM, day, { status: e.target.value });
+      renderReportAndChart(); // update only
+    });
+  });
+
+  tbody.querySelectorAll(".chkAb").forEach(chk=>{
+    chk.addEventListener("change", (e)=>{
+      const day = Number(e.target.dataset.day);
+      setDayData(viewY, viewM, day, { abizael: e.target.checked });
+      renderReportAndChart();
+    });
+  });
+
+  tbody.querySelectorAll(".chkRe").forEach(chk=>{
+    chk.addEventListener("change", (e)=>{
+      const day = Number(e.target.dataset.day);
+      setDayData(viewY, viewM, day, { renan: e.target.checked });
+      renderReportAndChart();
+    });
+  });
+
+  // save defaults if created
+  saveStore(store);
+
+  renderReportAndChart();
+}
+
+/* =========================
+   MONTH REPORT + CHART
+========================= */
+function renderReportAndChart(){
+  const md = getMonthData(viewY, viewM);
+  const totalDays = daysInMonth(viewY, viewM);
+
+  let work=0, off=0, ab=0, re=0;
+
+  // weekly buckets for chart (weeks 1..6)
+  const weeks = [0,0,0,0,0,0];
+
+  for(let day=1; day<=totalDays; day++){
+    const date = new Date(viewY, viewM, day);
+    const dow = date.getDay();
+    const status = (md[day]?.status ?? defaultStatusForDow(dow));
+
+    if(status === "Trabalho") work++;
+    else off++;
+
+    if(md[day]?.abizael) ab++;
+    if(md[day]?.renan) re++;
+
+    // week index inside month (0..5)
+    const firstDow = new Date(viewY, viewM, 1).getDay();
+    const idx = Math.floor(( (day + firstDow - 1) ) / 7);
+    if(status === "Trabalho") weeks[idx] += 1;
+  }
+
+  kpiWork.textContent = work;
+  kpiOff.textContent = off;
+  kpiAb.textContent = ab;
+  kpiRe.textContent = re;
+
+  drawBarChart(ctx, chart.width, chart.height, weeks, "Trabalho por semana");
+}
+
+function drawBarChart(context, W, H, values, label){
+  context.clearRect(0,0,W,H);
+
+  // frame
+  context.fillStyle = "#fff";
+  context.fillRect(0,0,W,H);
+
+  // axes padding
+  const padL = 45, padR = 16, padT = 18, padB = 34;
+  const cw = W - padL - padR;
+  const ch = H - padT - padB;
+
+  // title
+  context.fillStyle = "#111";
+  context.font = "bold 14px system-ui, -apple-system, Segoe UI, Arial";
+  context.fillText(label, padL, 16);
+
+  const maxVal = Math.max(1, ...values);
+  const n = values.length;
+  const gap = 12;
+  const barW = (cw - gap*(n-1)) / n;
+
+  // grid lines + y labels (0..max)
+  context.strokeStyle = "#e5e5e5";
+  context.lineWidth = 1;
+
+  for(let i=0;i<=4;i++){
+    const y = padT + ch - (ch*(i/4));
+    context.beginPath();
+    context.moveTo(padL, y);
+    context.lineTo(padL+cw, y);
+    context.stroke();
+
+    const v = Math.round(maxVal*(i/4));
+    context.fillStyle = "#666";
+    context.font = "12px system-ui, -apple-system, Segoe UI, Arial";
+    context.fillText(String(v), 10, y+4);
+  }
+
+  // bars
+  for(let i=0;i<n;i++){
+    const v = values[i];
+    const h = (v/maxVal)*ch;
+    const x = padL + i*(barW+gap);
+    const y = padT + (ch - h);
+
+    // bar
+    context.fillStyle = "#111";
+    context.fillRect(x, y, barW, h);
+
+    // value
+    context.fillStyle = "#111";
+    context.font = "bold 12px system-ui, -apple-system, Segoe UI, Arial";
+    context.fillText(String(v), x + barW/2 - 4, y - 6);
+
+    // x label
+    context.fillStyle = "#666";
+    context.font = "12px system-ui, -apple-system, Segoe UI, Arial";
+    context.fillText(`S${i+1}`, x + barW/2 - 8, padT + ch + 22);
+  }
+
+  // border
+  context.strokeStyle = "#ddd";
+  context.strokeRect(0.5,0.5,W-1,H-1);
+}
+
+/* =========================
+   ANNUAL REPORT + CHART
+========================= */
+function openAnnual(){
+  annualModal.hidden = false;
+
+  // years available (based on stored keys for user) + current year
+  const keys = Object.keys(store.data[currentUser] || {});
+  const years = new Set();
+  for(const k of keys){
+    const y = Number(k.split("-")[0]);
+    if(!Number.isNaN(y)) years.add(y);
+  }
+  years.add(new Date().getFullYear());
+
+  const ys = Array.from(years).sort((a,b)=>b-a);
+  annualYear.innerHTML = "";
+  for(const y of ys){
+    const opt = document.createElement("option");
+    opt.value = String(y);
+    opt.textContent = String(y);
+    annualYear.appendChild(opt);
+  }
+
+  annualYear.value = String(viewY);
+  renderAnnual();
+  annualYear.onchange = renderAnnual;
+}
+
+function renderAnnual(){
+  const year = Number(annualYear.value);
+  annualBody.innerHTML = "";
+
+  let sumW=0, sumF=0, sumA=0, sumR=0;
+
+  const monthsWork = [];
+
+  for(let m=0; m<12; m++){
+    const key = ymKey(year, m);
+    const md = (store.data[currentUser] && store.data[currentUser][key]) ? store.data[currentUser][key] : {};
+
+    const totalDays = daysInMonth(year, m);
+    let work=0, off=0, ab=0, re=0;
+
+    for(let day=1; day<=totalDays; day++){
+      const date = new Date(year, m, day);
+      const dow = date.getDay();
+      const status = md[day]?.status ?? defaultStatusForDow(dow);
+
+      if(status === "Trabalho") work++; else off++;
+      if(md[day]?.abizael) ab++;
+      if(md[day]?.renan) re++;
+    }
+
+    sumW += work; sumF += off; sumA += ab; sumR += re;
+    monthsWork.push(work);
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align:left;padding-left:10px;font-weight:800;">${new Date(year,m,1).toLocaleString("pt-BR",{month:"long"}).toUpperCase()}</td>
+      <td>${work}</td>
+      <td>${off}</td>
+      <td>${ab}</td>
+      <td>${re}</td>
+    `;
+    annualBody.appendChild(tr);
+  }
+
+  annualTW.textContent = sumW;
+  annualTF.textContent = sumF;
+  annualTA.textContent = sumA;
+  annualTR.textContent = sumR;
+
+  drawAnnualChart(monthsWork);
+}
+
+function drawAnnualChart(monthsWork){
+  const W = annualChart.width, H = annualChart.height;
+  actx.clearRect(0,0,W,H);
+  actx.fillStyle="#fff";
+  actx.fillRect(0,0,W,H);
+
+  const padL=45,padR=16,padT=18,padB=34;
+  const cw=W-padL-padR, ch=H-padT-padB;
+
+  actx.fillStyle="#111";
+  actx.font="bold 14px system-ui, -apple-system, Segoe UI, Arial";
+  actx.fillText("Trabalho por mês", padL, 16);
+
+  const maxVal = Math.max(1, ...monthsWork);
+  const n=12;
+  const gap=8;
+  const barW=(cw-gap*(n-1))/n;
+
+  // grid
+  actx.strokeStyle="#e5e5e5";
+  for(let i=0;i<=4;i++){
+    const y = padT + ch - (ch*(i/4));
+    actx.beginPath();
+    actx.moveTo(padL,y);
+    actx.lineTo(padL+cw,y);
+    actx.stroke();
+
+    const v = Math.round(maxVal*(i/4));
+    actx.fillStyle="#666";
+    actx.font="12px system-ui, -apple-system, Segoe UI, Arial";
+    actx.fillText(String(v), 10, y+4);
+  }
+
+  const labels = ["J","F","M","A","M","J","J","A","S","O","N","D"];
+
+  for(let i=0;i<n;i++){
+    const v=monthsWork[i];
+    const h=(v/maxVal)*ch;
+    const x=padL + i*(barW+gap);
+    const y=padT + (ch-h);
+
+    actx.fillStyle="#111";
+    actx.fillRect(x,y,barW,h);
+
+    actx.fillStyle="#666";
+    actx.font="12px system-ui, -apple-system, Segoe UI, Arial";
+    actx.fillText(labels[i], x + barW/2 - 4, padT + ch + 22);
+  }
+
+  actx.strokeStyle="#ddd";
+  actx.strokeRect(0.5,0.5,W-1,H-1);
+}
+
+/* =========================
+   INIT
+========================= */
+(function boot(){
+  store = loadStore();
+  // if no users, show login and hint
+  showLogin();
+  refreshUserList();
+
+  // auto: if only one user and PIN matches empty? no.
+})();
+</script>
+</body>
+</html>
